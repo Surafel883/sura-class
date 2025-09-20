@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exam</title>
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+    padding: 0;
+  }
+
+  h2 {
+    text-align: center;
+    color: #2575fc;
+    margin-top: 30px;
+  }
+
+  #examFile {
+    display: block;
+    margin: 20px auto;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  #examContainer {
+    max-width: 800px;
+    margin: 20px auto 50px auto;
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+
+  #examContainer h3 {
+    color: #2575fc;
+    margin-bottom: 10px;
+  }
+
+  #examContainer p {
+    margin: 8px 0;
+    color: #333;
+  }
+
+  #timer {
+    font-weight: bold;
+    color: #d9534f;
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+  }
+
+  .question {
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background: #f9f9f9;
+  }
+
+  .question p {
+    margin: 0 0 10px 0;
+    font-weight: bold;
+  }
+
+  .choices label {
+    display: block;
+    margin-bottom: 5px;
+    cursor: pointer;
+  }
+
+  button {
+    display: block;
+    background: #2575fc;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin: 20px auto 0 auto;
+    transition: background 0.3s;
+  }
+
+  button:hover {
+    background: #1a5cd1;
+  }
+
+  /* Banned exam styling */
+  .banned {
+    text-align: center;
+    color: #fff;
+    background: #d9534f;
+    padding: 40px;
+    border-radius: 12px;
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<h2>Exam</h2>
+<input type="file" id="examFile" accept=".json">
+<div id="examContainer"></div>
+
+
+<script>
+let examData, timerInterval;
+let examBanned = false;
+// At the top of exam.html
+if(!examData){
+    const stored = localStorage.getItem("currentExam");
+    if(stored){
+        examData = JSON.parse(stored);
+        startExam();
+    }
+}
+
+
+document.getElementById('examFile').addEventListener('change', function(e){
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(){
+        examData = JSON.parse(reader.result);
+        startExam();
+    }
+    reader.readAsText(file);
+});
+
+document.addEventListener("visibilitychange", function() {
+    if(document.hidden && !examBanned){
+        alert("You left the tab! Exam is banned!");
+        examBanned = true;
+        document.getElementById('examContainer').innerHTML = "<div class='banned'>Exam Banned!</div>";
+        clearInterval(timerInterval);
+    }
+});
+
+function startExam(){
+    const container = document.getElementById('examContainer');
+    container.innerHTML = `
+        <h3>${examData.examName} - ${examData.subject}</h3>
+        <p><strong>Date:</strong> ${examData.examDate}</p>
+        <p><strong>Instructions:</strong> ${examData.instructions}</p>
+        <div id="timer"></div>
+    `;
+
+    const endTime = Date.now() + examData.timer*60*1000;
+    timerInterval = setInterval(()=>{
+        if(examBanned){
+            clearInterval(timerInterval);
+            return;
+        }
+        const diff = endTime - Date.now();
+        if(diff<=0){
+            clearInterval(timerInterval);
+            alert("Time's up!");
+            submitExam();
+        } else {
+            const min = Math.floor(diff/60000);
+            const sec = Math.floor((diff%60000)/1000);
+            document.getElementById('timer').textContent = `Time Left: ${min}m ${sec}s`;
+        }
+    },1000);
+
+    examData.questions.forEach((q,i)=>{
+        const div = document.createElement('div');
+        div.classList.add('question');
+        let choicesHTML = '<div class="choices">';
+        q.choices.forEach((c,j)=>{
+            choicesHTML += `<label><input type="radio" name="q${i}" value="${j}"> ${c}</label>`;
+        });
+        choicesHTML += '</div>';
+        div.innerHTML = `<p>${i+1}. ${q.text}</p>${choicesHTML}`;
+        container.appendChild(div);
+    });
+
+    const submitBtn = document.createElement('button');
+    submitBtn.textContent = "Submit Exam";
+    submitBtn.onclick = submitExam;
+    container.appendChild(submitBtn);
+}
+
+function submitExam(){
+    if(examBanned){
+        alert("Exam was banned. Cannot submit.");
+        return;
+    }
+
+  let score = 0;
+
+examData.questions.forEach((q, i) => {
+    const answer = document.querySelector(`input[name="q${i}"]:checked`);
+    if(answer) { // check if user selected an answer
+        if(parseInt(answer.value, 10) + 1 === q.correct) {
+            score++;
+        }
+    }
+});
+
+
+
+    const total = examData.questions.length;
+    document.getElementById('examContainer').innerHTML = `
+        <h2>Exam Finished!</h2>
+        <p><strong>Subject:</strong> ${examData.subject}</p>
+        <p><strong>Date:</strong> ${examData.examDate}</p>
+        <p><strong>Instructions:</strong> ${examData.instructions}</p>
+        <p><strong>Your Score:</strong> ${score} / ${total}</p>`;
+    clearInterval(timerInterval);
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register</title>
+  <style>
+    /* General styles */
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    /* Form container */
+    .register-container {
+      background-color: #fff;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .register-container h2 {
+      margin-bottom: 30px;
+      color: #333;
+    }
+
+    /* Input fields */
+    .register-container input {
+      width: 100%;
+      padding: 12px 15px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    /* Register button */
+    .register-container button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 20px;
+      background-color: #4facfe;
+      border: none;
+      color: white;
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .register-container button:hover {
+      background-color: #00f2fe;
+    }
+
+    /* Login icon link */
+    .login-link {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #4facfe;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .login-link img {
+      width: 24px;
+      height: 24px;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="loginOverlay" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+">
+  <div style="
+      background: #1f2937;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      text-align: center;
+      width: 320px;
+      color: white;
+      font-family: Arial, sans-serif;
+  ">
+    <h2 style="margin-bottom:25px; font-size:1.8rem; letter-spacing:1px;">Crate new account</h2>
+    <input type="password" id="passwordInput" placeholder="Enter Password" style="
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+    ">
+    <button onclick="checkPassword()" style="
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: #2575fc;
+        color: white;
+        font-size: 1rem;
+        cursor: pointer;
+    " onmouseover="this.style.background='#1a5edb'" onmouseout="this.style.background='#2575fc'">
+      Login
+    </button>
+  </div>
+</div>
+
+
+  <div class="register-container">
+    <h2>Create New Account</h2>
+
+    
+
+    <form action="#" method="post">
+      <input type="text" name="fullname" placeholder="Full Name" required>
+      
+      <input type="tel" name="phone" placeholder="Phone Number" required pattern="[0-9]{10,15}">
+      <input type="password" name="password" placeholder="Password" required>
+      
+       
+      
+      <select id="Grade" name="Grade" required
+        style="
+        width: 1000%;
+        max-width: 370px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-family: Arial, sans-serif;
+        background: #fff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        cursor: pointer;
+          ">
+         <option value="" disabled selected>Select your Grade</option>
+         <option value="9">9</option>
+         <option value="10">10</option>
+         <option value="11">11</option>
+         <option value="12">12</option>
+        </select>
+      
+      <select id="Section" name="Section" required
+        style="
+        width: 10000%;
+        max-width: 370px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 20px;
+        font-size: 1rem;
+        font-family: Arial, sans-serif;
+        background: #addb07;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        cursor: pointer;
+          ">
+         <option value="" disabled selected>Select-Section</option>
+         <option value="A">A</option>
+         <option value="B">B</option>
+         <option value="C">C</option>
+         <option value="D">D</option>
+       </select>  
+       <select id="SEX" name="SEX" required
+        style="
+        width: 1000%;
+        max-width: 120px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-family: Arial, sans-serif;
+        background: #fff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        cursor: pointer;
+        left: -300px;  /* move right */
+        
+          ">
+         <option value="" disabled selected>SEX</option>
+         <option value="Male">M</option>
+         <option value="Female">F</option>
+         
+        
+        </select>
+
+
+
+      <button type="submit">Register</button>
+    </form>
+
+    <a  class="login-link" href="/login">
+      <img src="https://cdn-icons-png.flaticon.com/512/1828/1828479.png" alt="login icon">
+      
+      Login
+    </a>
+  </div>
+<script>
+const password = "12345678";
+
+function checkPassword() {
+    const input = document.getElementById("passwordInput").value;
+    if(input === password){
+        document.getElementById("loginOverlay").style.display = "none";
+        document.getElementById("content").style.filter = "none";
+    } else {
+        alert("Incorrect password!");
+    }
+}
+</script>
+</body>
+</html>

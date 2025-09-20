@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Examine - Teacher Panel</title>
+<style>
+  body { font-family: Arial; padding: 20px; background: #f4f6f8; }
+  h2 { color: #2575fc; text-align: center; }
+  input, button, select { margin: 10px 0; padding: 8px; font-size: 1rem; }
+  button { background: #2575fc; color: white; border: none; border-radius: 6px; cursor: pointer; }
+  button:hover { background: #1a5cd1; }
+  .status { font-weight: bold; padding: 6px 12px; border-radius: 6px; color: white; display: inline-block; }
+  .green { background: green; }
+  .red { background: red; }
+</style>
+</head>
+<body>
+
+<h2>Teacher Panel - Import & Start Exam</h2>
+
+<input type="file" id="examFile" accept=".json"><br>
+
+<label>Choose Grade(s):</label><br>
+<select id="gradeSelect" multiple size="3"></select><br>
+
+<label>Choose Section(s):</label><br>
+<select id="sectionSelect" multiple size="3"></select><br>
+
+<button id="startExam">Start Exam</button>
+
+<h3>Exam Status: <span id="examStatus" class="status red">No Exam</span></h3>
+<p>Students Currently Taking Exam: <span id="studentsLive">0</span></p>
+<p>Students Finished Exam: <span id="studentsFinished">0</span></p>
+<p>Students Banned (Left Early): <span id="studentsBanned">0</span></p>
+
+<script>
+let examData;
+let examStarted = false;
+
+// Load exam JSON
+document.getElementById('examFile').addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(){
+        examData = JSON.parse(reader.result);
+        alert("Exam loaded: " + examData.examName);
+
+        // Populate grades & sections
+        const gradeSelect = document.getElementById('gradeSelect');
+        gradeSelect.innerHTML = "";
+        examData.grades.forEach(g => {
+            const option = document.createElement('option');
+            option.value = g;
+            option.textContent = g;
+            gradeSelect.appendChild(option);
+        });
+
+        const sectionSelect = document.getElementById('sectionSelect');
+        sectionSelect.innerHTML = "";
+        examData.sections.forEach(s => {
+            const option = document.createElement('option');
+            option.value = s;
+            option.textContent = s;
+            sectionSelect.appendChild(option);
+        });
+    }
+    reader.readAsText(file);
+});
+
+// Start exam
+document.getElementById('startExam').addEventListener('click', function(){
+    if(!examData){
+        alert("Please import an exam JSON first!");
+        return;
+    }
+
+    const selectedGrades = Array.from(document.getElementById('gradeSelect').selectedOptions).map(o => o.value);
+    const selectedSections = Array.from(document.getElementById('sectionSelect').selectedOptions).map(o => o.value);
+
+    if(selectedGrades.length === 0 || selectedSections.length === 0){
+        alert("Please select at least one grade and one section!");
+        return;
+    }
+
+    // Save exam data with metadata
+    examData.selectedGrades = selectedGrades;
+    examData.selectedSections = selectedSections;
+    examData.startTime = Date.now();
+    examData.completed = false;
+
+    localStorage.setItem("currentExam", JSON.stringify(examData));
+
+    // Reset student tracking
+    localStorage.setItem("studentsLive", JSON.stringify({}));
+    localStorage.setItem("studentsFinished", JSON.stringify({}));
+    localStorage.setItem("studentsBanned", JSON.stringify({}));
+
+    examStarted = true;
+
+    // Open exam.html for students
+    window.open("exam.html", "_blank");
+});
+
+// Update live/finished/banned counts
+function updateCounts(){
+    if(!examStarted) return;
+
+    const live = JSON.parse(localStorage.getItem("studentsLive") || "{}");
+    const finished = JSON.parse(localStorage.getItem("studentsFinished") || "{}");
+    const banned = JSON.parse(localStorage.getItem("studentsBanned") || "{}");
+
+    document.getElementById("studentsLive").textContent = Object.keys(live).length;
+    document.getElementById("studentsFinished").textContent = Object.keys(finished).length;
+    document.getElementById("studentsBanned").textContent = Object.keys(banned).length;
+
+    const statusEl = document.getElementById('examStatus');
+    const elapsed = Date.now() - examData.startTime;
+    const examDuration = examData.timer * 60 * 1000;
+
+    if(elapsed >= examDuration){
+        statusEl.textContent = "Exam Completed";
+        statusEl.classList.remove('green');
+        statusEl.classList.add('red');
+        examData.completed = true;
+        localStorage.setItem("currentExam", JSON.stringify(examData));
+    } else if(Object.keys(live).length > 0){
+        statusEl.textContent = "Exam In Progress";
+        statusEl.classList.remove('red');
+        statusEl.classList.add('green');
+    } else {
+        statusEl.textContent = "Waiting for students";
+        statusEl.classList.remove('green');
+        statusEl.classList.add('red');
+    }
+}
+
+// Update counts every second
+setInterval(updateCounts, 1000);
+window.addEventListener("storage", updateCounts);
+</script>
+
+</body>
+</html>

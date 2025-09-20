@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Exam</title>
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+    padding: 0;
+  }
+  h2 {
+    text-align: center;
+    color: #2575fc;
+    margin-top: 20px;
+  }
+  form {
+    max-width: 700px;
+    margin: 20px auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+    color: #333;
+  }
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    background: #f9f9f9;
+  }
+  textarea {
+    resize: vertical;
+  }
+  button {
+    background: #2575fc;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 10px;
+    transition: background 0.3s;
+  }
+  button:hover {
+    background: #1a5cd1;
+  }
+  #questionsContainer {
+    margin-top: 20px;
+  }
+  #questionsContainer h4 {
+    margin-bottom: 6px;
+    color: #444;
+  }
+  #questionsContainer input[type="text"] {
+    width: calc(100% - 110px);
+    margin-right: 10px;
+    margin-bottom: 5px;
+  }
+  #questionsContainer input[type="radio"] {
+    margin-left: 5px;
+    margin-right: 5px;
+  }
+</style>
+</head>
+<body>
+
+<h2>Create Exam</h2>
+
+<form id="createExamForm">
+  <label>Exam Name:</label>
+  <input type="text" name="exam_name" required>
+
+  <label>Subject:</label>
+  <input type="text" name="subject" required>
+
+  <label>Instructions:</label>
+  <textarea name="instructions" rows="3" placeholder="Enter exam instructions" required></textarea>
+
+  <label>Exam Date:</label>
+  <input type="date" name="exam_date" required>
+
+  <label>Number of Questions:</label>
+  <input type="number" id="numQuestions" min="1" value="5" required>
+
+  <label>Number of Choices per Question:</label>
+  <input type="number" id="numChoices" min="2" max="6" value="4" required>
+
+  <label>Countdown (minutes):</label>
+  <input type="number" name="timer" min="1" value="30" required>
+
+  <label>Select Grades:</label>
+  <select name="grades" multiple required>
+    <option value="9">9</option>
+    <option value="10">10</option>
+    <option value="11">11</option>
+    <option value="12">12</option>
+  </select>
+
+  <label>Select Sections:</label>
+  <select name="sections" multiple required>
+    <option value="A">A</option>
+    <option value="B">B</option>
+    <option value="C">C</option>
+    <option value="D">D</option>
+  </select>
+
+  <button type="button" onclick="generateQuestions()">Generate Questions</button>
+
+  <div id="questionsContainer"></div>
+
+  <button type="button" onclick="downloadExam()">Download Exam JSON</button>
+</form>
+
+<script>
+function generateQuestions(){
+    const numQ = parseInt(document.getElementById('numQuestions').value);
+    const numC = parseInt(document.getElementById('numChoices').value);
+
+    const container = document.getElementById('questionsContainer');
+    container.innerHTML = '';
+    for(let i=1; i<=numQ; i++){
+        const qDiv = document.createElement('div');
+        qDiv.innerHTML = `<h4>Question ${i}</h4>
+            <input type="text" placeholder="Question text" data-qid="${i}" class="questionText"><br>`;
+        for(let j=1;j<=numC;j++){
+            qDiv.innerHTML += `<input type="text" placeholder="Choice ${j}" data-qid="${i}" data-choice="${j}" class="choiceText"> `;
+            qDiv.innerHTML += `<input type="radio" name="correct${i}" value="${j}" class="correctChoice"> Correct<br>`;
+        }
+        container.appendChild(qDiv);
+    }
+}
+
+function downloadExam(){
+    const examName = document.querySelector('input[name="exam_name"]').value;
+    const subject = document.querySelector('input[name="subject"]').value;
+    const instructions = document.querySelector('textarea[name="instructions"]').value;
+    const examDate = document.querySelector('input[name="exam_date"]').value;
+    const timer = parseInt(document.querySelector('input[name="timer"]').value);
+    const grades = Array.from(document.querySelector('select[name="grades"]').selectedOptions).map(o=>o.value);
+    const sections = Array.from(document.querySelector('select[name="sections"]').selectedOptions).map(o=>o.value);
+
+    const questions = [];
+    document.querySelectorAll('.questionText').forEach(q=>{
+        const qid = q.dataset.qid;
+        const text = q.value;
+        const choices = [];
+        document.querySelectorAll(`.choiceText[data-qid="${qid}"]`).forEach(c=>choices.push(c.value));
+        const correct = document.querySelector(`.correctChoice[name="correct${qid}"]:checked`)?.value;
+        questions.push({text, choices, correct});
+    });
+
+    const exam = {examName, subject, instructions, examDate, timer, grades, sections, questions};
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exam, null, 2));
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute("href", dataStr);
+    dlAnchor.setAttribute("download", examName+".json");
+    dlAnchor.click();
+}
+</script>
+</body>
+</html>

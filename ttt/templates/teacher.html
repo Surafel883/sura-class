@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Panel</title>
+<style>
+    body { font-family: Arial; padding: 20px; background: #f4f6f8; }
+    input, select, textarea, button { display: block; margin: 10px 0; padding: 8px; width: 100%; max-width: 400px; }
+</style>
+</head>
+<body>
+<h2>Teacher Panel</h2>
+
+<label>Type:</label>
+<select id="workType">
+    <option value="classwork">Class Work</option>
+    <option value="homework">Home Work</option>
+    <option value="assignment">Assignment</option>
+</select>
+
+<label>Grade:</label>
+<select id="grade">
+    <option value="9">9</option>
+    <option value="10">10</option>
+    <option value="11">11</option>
+    <option value="12">12</option>
+</select>
+
+<label>Section:</label>
+<select id="section">
+    <option value="A">A</option>
+    <option value="B">B</option>
+    <option value="C">C</option>
+</select>
+
+<label>Title / Question:</label>
+<input type="text" id="title" name="question" placeholder="Enter title or question">
+
+<button onclick="postWork()">Post Work</button>
+
+<h3>Posted Works:</h3>
+<ul id="worksList"></ul>
+
+<script>
+async function loadWorks() {
+    const res = await fetch('/api/works');
+    const works = await res.json();
+    const list = document.getElementById('worksList');
+    list.innerHTML = '';
+    works.forEach(w => {
+        const li = document.createElement('li');
+        li.textContent = `${w.type} - Grade ${w.grade}${w.section} : ${w.question}`;
+        list.appendChild(li);
+    });
+}
+
+async function postWork() {
+    const type = document.getElementById('workType').value;
+    const grade = document.getElementById('grade').value;
+    const section = document.getElementById('section').value;
+    const question = document.getElementById('question').value.trim();
+    const works = getWorks();
+    works.push({ type, grade, section, question });  // <-- here
+    saveWorks(works);
+    displayWorks();
+    if (!title) {
+        alert("Enter a title or question!");
+        return;
+    }
+
+    const res = await fetch('/api/works', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, grade, section, question })
+    });
+
+    if (res.ok) {
+        alert("Posted successfully!");
+        document.getElementById('title').value = '';
+        loadWorks(); // refresh list
+    } else {
+        alert("Error saving work!");
+    }
+}
+
+// Load works when page opens
+loadWorks();
+</script>
+</body>
+</html>

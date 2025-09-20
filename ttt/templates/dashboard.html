@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard</title>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #f4f6f8;
+        transition: background 0.3s, color 0.3s;
+    }
+
+    body.dark-mode {
+        background-color: #121212;
+        color: #ffffff;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #2575fc;
+        color: #fff;
+        padding: 15px 30px;
+        font-size: 1.5rem;
+        position: relative;
+    }
+
+    .profile {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+        cursor: pointer;
+    }
+
+    .profile img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+    }
+
+    /* Dropdown menu */
+    .dropdown {
+        display: none;
+        position: absolute;
+        top: 60px;
+        right: 0;
+        background: #fff;
+        color: #333;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        overflow: hidden;
+        min-width: 150px;
+        z-index: 1000;
+    }
+
+    .dropdown button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        background: none;
+        text-align: left;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background 0.2s;
+    }
+
+    .dropdown button:hover {
+        background: #f0f0f0;
+    }
+
+    main {
+        padding: 20px;
+    }
+
+    .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+
+    .card {
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    .card h3 {
+        margin-bottom: 10px;
+        color: #2f3e46;
+    }
+
+    .card p {
+        font-size: 1.2rem;
+        color: #52796f;
+    }
+
+    body.dark-mode .card {
+        background-color: #1e1e1e;
+        color: #fff;
+    }
+
+    body.dark-mode .dropdown {
+        background-color: #333;
+        color: #fff;
+    }
+
+    body.dark-mode .dropdown button:hover {
+        background-color: #444;
+    }
+    .user-info {
+    display: flex;
+    gap: 15px; /* space between grade and section */
+    font-size: 1rem;
+    color: #fff;
+    font-weight: 500;
+    margin-left: 20px; /* optional spacing from welcome text */
+   }
+
+    body.dark-mode .user-info {
+       color: #17dd38; /* lighter color in dark mode */
+   }
+
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div>Welcome, {{ user.fullname }}</div>
+     
+     
+
+    <div class="profile" onclick="toggleDropdown()">
+        <span>{{ user.phone }}</span>
+        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Profile Icon">
+        <div class="dropdown" id="dropdownMenu">
+            <div>Grade-{{ user.Grade }}</div>
+            <div>Section-{{ user.Section }}</div>
+           
+            <button onclick="toggleDarkMode()">Dark Mode</button>
+            <form method="GET" action="/login">
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<main>
+    <div class="cards">
+        <div class="card" onclick="showWork('classwork')">
+           <h3>Class-Work</h3>
+           <p>{{ counts.classwork }}</p>
+        </div>
+
+        <div class="card" onclick="showWork('homework')">
+          <h3>Home-Work</h3>
+          <p>{{ counts.homework }}</p>
+        </div>
+
+        <div class="card" onclick="showWork('assignment')">
+          <h3>Assignment</h3>
+          <p>{{ counts.assignment }}</p>
+        </div>
+
+        <div class="card">
+            <h3>Details</h3>
+            <p>look you detail status</p>
+        </div>
+    </div>
+    <div id="workList" style="margin-top: 20px;"></div>
+    <div id="worksData" data-works='{{ works | tojson | safe if works else "[]" }}'></div>
+</main>
+
+<script>
+    async function updateCounts() {
+    const res = await fetch(`/api/work_counts/{{ user.phone }}`);
+    const data = await res.json();
+    document.getElementById('classworkCount').textContent = data.classwork;
+    document.getElementById('homeworkCount').textContent = data.homework;
+    document.getElementById('assignmentCount').textContent = data.assignment;
+     }
+
+     // Poll every 3–5 seconds
+      setInterval(updateCounts, 3000);
+       updateCounts(); // initial call
+   let studentworks = JSON.parse(document.getElementById('worksData').dataset.works);
+
+    function showWork(type) {
+     const filtered = studentworks.filter(
+         w => w.type === type && w.grade === "{{ user.Grade }}" && w.section === "{{ user.Section }}"
+     );
+     const container = document.getElementById('workList');
+     if(filtered.length === 0){
+         container.innerHTML = `<p>No ${type} for your class</p>`;
+         return;
+     }
+     let html = `<h3>${type.toUpperCase()}</h3><ul>`;
+     filtered.forEach(w => {
+         html += `<li>${w.question}</li>`;
+     });
+     html += "</ul>";
+     container.innerHTML = html;
+    }
+    function toggleDropdown() {
+        const menu = document.getElementById("dropdownMenu");
+        menu.style.display = menu.style.display === "block" ? "none" : "block";
+    }
+
+    function toggleDarkMode() {
+        document.body.classList.toggle("dark-mode");
+    }
+
+    // Close dropdown if clicked outside
+    window.onclick = function(event) {
+        if (!event.target.closest('.profile')) {
+            document.getElementById("dropdownMenu").style.display = "none";
+            
+        }
+    }
+    // Example: current student info
+const user = { grade: "10", section: "B" }; // Replace with dynamic server values if available
+
+// Sample storage structure
+// Each work is saved by teacher in localStorage
+// localStorage.setItem('works', JSON.stringify([
+//     { type: "classwork", grade: "10", section: "B", question: "Math Q1: 2+2?" },
+//     { type: "homework", grade: "10", section: "B", question: "English HW: Write a paragraph." }
+// ]));
+
+function updateDashboardNotifications() {
+    const works = JSON.parse(localStorage.getItem('works')) || [];
+    
+    const classworks = works.filter(w => w.type === 'classwork' && w.grade === user.grade && w.section === user.section);
+    const homeworks = works.filter(w => w.type === 'homework' && w.grade === user.grade && w.section === user.section);
+    const assignments = works.filter(w => w.type === 'assignment' && w.grade === user.grade && w.section === user.section);
+
+    document.getElementById('classworkCount').textContent = classworks.length;
+    document.getElementById('homeworkCount').textContent = homeworks.length;
+    document.getElementById('assignmentCount').textContent = assignments.length;
+}
+
+function openWork(type){
+    const works = JSON.parse(localStorage.getItem('works')) || [];
+    const filtered = works.filter(w => w.type === type && w.grade === user.grade && w.section === user.section);
+    
+    const container = document.getElementById('workList');
+    if(filtered.length === 0){
+        container.innerHTML = `<p>No new ${type}</p>`;
+        return;
+    }
+
+    let html = `<h3>${type.toUpperCase()}</h3><ul>`;
+    filtered.forEach(w => {
+        html += `<li>${w.question}</li>`;
+    });
+    html += "</ul>";
+    container.innerHTML = html;
+}
+
+// Initial call
+updateDashboardNotifications();
+// Optional: refresh every 5 seconds if teacher posts dynamically
+setInterval(updateDashboardNotifications, 5000);
+</script>
+
+</body>
+</html>
